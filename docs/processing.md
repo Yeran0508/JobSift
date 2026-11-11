@@ -48,12 +48,29 @@ Deduplication has two different identities:
 
 The fingerprint intentionally excludes URL and acquisition time because mirrors and reruns change those values. Salary and posting date are also excluded from the first M2-A fingerprint; this favors collapsing mirrored content, and the trade-off is documented rather than presented as perfect entity resolution. Every removed record is listed with its reason and retained identity.
 
+## M2-B entity and skill enrichment
+
+M2-B receives `CleanJobPosting` records and runs their title, company, non-marker location, and description through one shared spaCy pipeline with `nlp.pipe`. The runtime pins spaCy 3.8.18 and the compatible `en_core_web_sm` 3.8.0 package. Organizations come from `ORG`; locations come from `GPE`, `LOC`, and `FAC`. Other entity labels are ignored rather than silently reclassified.
+
+Technical skills use a separate case-insensitive `PhraseMatcher`, because general-purpose NER is not trained to recognize the project’s domain taxonomy. The committed [skills-v1.json](../config/nlp/skills-v1.json) maps reviewed aliases such as `JS` to `JavaScript` and `K8s` to `Kubernetes`. Broad aliases such as `Node` and `Spark` are intentionally excluded because they are common English words. Duplicate phrases across canonical skills fail dictionary validation before enrichment.
+
+Each enriched record retains the complete clean record and adds:
+
+- unique organization and location evidence with original text, normalized text, spaCy label, and character offsets;
+- unique canonical skills with the exact matched alias and character offsets;
+- a SHA-256 digest of the exact text sent to spaCy;
+- model name/version plus dictionary version/SHA-256 in the batch report.
+
+Tests inject a deterministic `EntityRuler` so entity assertions do not depend on statistical model changes. A separate test loads the pinned `en_core_web_sm` artifact from the final image, proving that the production model is actually packaged. This follows spaCy’s documented separation between trained pipelines, [rule-based entities](https://spacy.io/api/entityruler), and [phrase terminology matching](https://spacy.io/api/phrasematcher).
+
 ## Current limits
 
 - Location normalization is deliberately small and does not geocode or infer countries beyond explicit remote-US text.
 - Salary parsing does not convert currencies or annualize hourly compensation.
 - Content-fingerprint deduplication can merge legitimately separate openings with identical text. M2-B/M3 evidence may justify adding requisition metadata or a configurable fingerprint.
 - The cleaner is an in-process deterministic boundary, not a distributed Pandas job or a throughput claim.
-- spaCy organization/location entities and a reviewed technical-skill dictionary are M2-B, not part of M2-A.
+- `en_core_web_sm` outputs are predictions, not ground truth; M2-B does not claim entity accuracy without a labeled evaluation set.
+- The skill dictionary favors precision and has finite recall. New aliases require review, a version change, and regression cases.
+- Only the first occurrence of each normalized entity or canonical skill is retained per job. Match counts are not treated as relevance scores.
 
-The deterministic baseline is recorded in [experiments/2026-11-11-m2a-cleaning-baseline.md](experiments/2026-11-11-m2a-cleaning-baseline.md).
+The deterministic baselines are recorded in [experiments/2026-11-11-m2a-cleaning-baseline.md](experiments/2026-11-11-m2a-cleaning-baseline.md) and [experiments/2026-11-11-m2b-enrichment-baseline.md](experiments/2026-11-11-m2b-enrichment-baseline.md).

@@ -1,0 +1,29 @@
+{
+  "version": "skills-v1-2026-11-11",
+  "entries": [
+    {"canonical": "Python", "aliases": []},
+    {"canonical": "Java", "aliases": []},
+    {"canonical": "JavaScript", "aliases": ["JS", "ECMAScript"]},
+    {"canonical": "TypeScript", "aliases": ["TS"]},
+    {"canonical": "React", "aliases": ["React.js", "ReactJS"]},
+    {"canonical": "Node.js", "aliases": ["NodeJS"]},
+    {"canonical": "FastAPI", "aliases": []},
+    {"canonical": "Django", "aliases": []},
+    {"canonical": "Flask", "aliases": []},
+    {"canonical": "Spring Boot", "aliases": []},
+    {"canonical": "PostgreSQL", "aliases": ["Postgres"]},
+    {"canonical": "MySQL", "aliases": []},
+    {"canonical": "Redis", "aliases": []},
+    {"canonical": "MongoDB", "aliases": ["Mongo"]},
+    {"canonical": "Elasticsearch", "aliases": ["Elastic Search"]},
+    {"canonical": "Docker", "aliases": []},
+    {"canonical": "Kubernetes", "aliases": ["K8s"]},
+    {"canonical": "Amazon Web Services", "aliases": ["AWS"]},
+    {"canonical": "Google Cloud Platform", "aliases": ["GCP"]},
+    {"canonical": "Microsoft Azure", "aliases": ["Azure"]},
+    {"canonical": "Apache Kafka", "aliases": ["Kafka"]},
+    {"canonical": "Apache Spark", "aliases": []},
+    {"canonical": "Pandas", "aliases": []},
+    {"canonical": "spaCy", "aliases": []}
+  ]
+}

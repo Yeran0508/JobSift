@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0 and M1 are implemented and verified. M1 provides compliance-gated fixture/API adapters, bounded HTTP behavior, immutable raw snapshots, parser-drift checks, idempotent reruns, and auditable source metrics. M2-A adds policy-driven Pandas cleaning: Unicode and whitespace normalization, UTC date parsing, location and employment-type normalization, guarded salary-range parsing and median imputation, missingness decisions, stable-ID and content-fingerprint deduplication, raw-value preservation, and per-field transformation reasons.
+M0, M1, and M2 are implemented and verified. M1 provides compliance-gated fixture/API adapters, bounded HTTP behavior, immutable raw snapshots, parser-drift checks, idempotent reruns, and auditable source metrics. M2-A adds policy-driven Pandas cleaning, guarded missing-value decisions, two-layer deduplication, raw-value preservation, and per-field transformation reasons. M2-B adds a pinned spaCy English pipeline for organization/location entities and a versioned, collision-checked `PhraseMatcher` skill dictionary with aliases, match offsets, input hashes, and model/dictionary provenance.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-Selenium acquisition, cookies, browser waits, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
+Selenium acquisition, cookies, browser waits, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
 
 ## Interview evidence standard
 
