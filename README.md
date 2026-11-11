@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0 and M1 are implemented and verified. M1-A adds a compliance-gated source contract, synthetic fixture adapter, immutable content-addressed raw snapshots, configuration-driven HTML parsing, stable source IDs, missing-field metrics, parser-drift detection, idempotent reruns, and per-source failure isolation. M1-B adds an identified HTTP client, reusable sessions, timeouts, conservative rate limiting, bounded retries with `Retry-After` or exponential backoff, Greenhouse JSON parsing, and a reviewed public Greenhouse source. M1-C adds immutable per-run audit manifests and source-level acquisition metrics for outcomes, jobs, snapshots, attempts, retries, waiting, backoff, missingness, and parser drift.
+M0 and M1 are implemented and verified. M1 provides compliance-gated fixture/API adapters, bounded HTTP behavior, immutable raw snapshots, parser-drift checks, idempotent reruns, and auditable source metrics. M2-A adds policy-driven Pandas cleaning: Unicode and whitespace normalization, UTC date parsing, location and employment-type normalization, guarded salary-range parsing and median imputation, missingness decisions, stable-ID and content-fingerprint deduplication, raw-value preservation, and per-field transformation reasons.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-Selenium acquisition, cookies, browser waits, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
+Selenium acquisition, cookies, browser waits, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
 
 ## Interview evidence standard
 
@@ -30,7 +30,7 @@ concept -> small implementation -> automated test -> real verification
 
 The repository never treats a target as a measured result. See [requirements.md](requirements.md) for V1 acceptance criteria and [docs/experiments/README.md](docs/experiments/README.md) for experiment evidence rules.
 
-M1 acquisition design and current limitations are documented in [docs/acquisition.md](docs/acquisition.md).
+M1 acquisition design is documented in [docs/acquisition.md](docs/acquisition.md). M2 cleaning policies, evidence, and limitations are documented in [docs/processing.md](docs/processing.md).
 
 ## Reviewed public-source smoke test
 
