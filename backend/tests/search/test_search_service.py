@@ -115,6 +115,24 @@ def test_search_service_parses_hits_cursor_and_facets(search_document_factory) -
     assert result.location_facets[0].key == "Chicago, IL"
 
 
+def test_search_service_reports_timeout_and_failed_shards_as_partial() -> None:
+    result = JobSearchService.parse_result(
+        {
+            "took": 12,
+            "timed_out": True,
+            "_shards": {"failed": 2},
+            "hits": {"total": {"value": 0}, "hits": []},
+        },
+        requested_size=20,
+    )
+
+    assert result.is_partial is True
+    assert result.warnings == [
+        "Elasticsearch timed out; results may be incomplete.",
+        "2 search shard(s) failed; results may be incomplete.",
+    ]
+
+
 def test_result_parser_handles_short_page_numeric_total_and_missing_aggregations(
     search_document_factory,
 ) -> None:

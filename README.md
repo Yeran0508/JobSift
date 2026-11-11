@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0 through M3 are implemented and verified. M1 provides compliance-gated acquisition and auditable source metrics. M2 adds policy-driven Pandas cleaning, two-layer deduplication, a pinned spaCy entity pipeline, and a versioned `PhraseMatcher` skill dictionary. M3 adds a strict Elasticsearch mapping, separate index/search analyzers, deterministic bulk upserts, versioned-index alias swaps, weighted BM25 search, exact filters, facets, and deterministic `search_after` pagination.
+M0 through M4 are implemented and verified. M1 provides compliance-gated acquisition and auditable source metrics. M2 adds policy-driven Pandas cleaning, two-layer deduplication, spaCy enrichment, and a versioned skill dictionary. M3 adds strict Elasticsearch indexing, weighted BM25 search, exact filters, facets, and deterministic pagination. M4 exposes that search through a validated FastAPI contract and a responsive web client with query, filters, facets, job detail, source/freshness evidence, and explicit loading, empty, partial, and failure states.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-The FastAPI search endpoint, evaluation results, and user interface are not implemented yet; those are M4 and M5 work. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
+Relevance judgments, measured retrieval/latency metrics, and the final interview demo package remain M5 work. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
 
 ## Interview evidence standard
 
@@ -30,7 +30,7 @@ concept -> small implementation -> automated test -> real verification
 
 The repository never treats a target as a measured result. See [requirements.md](requirements.md) for V1 acceptance criteria and [docs/experiments/README.md](docs/experiments/README.md) for experiment evidence rules.
 
-M1 acquisition design is documented in [docs/acquisition.md](docs/acquisition.md), M2 processing in [docs/processing.md](docs/processing.md), and M3 indexing/search in [docs/search.md](docs/search.md).
+M1 acquisition design is documented in [docs/acquisition.md](docs/acquisition.md), M2 processing in [docs/processing.md](docs/processing.md), M3 indexing in [docs/search.md](docs/search.md), and the M4 API/UI loop in [docs/user-facing-search.md](docs/user-facing-search.md).
 
 ## Reviewed public-source smoke test
 
@@ -85,3 +85,11 @@ JOBSIFT_RUN_ELASTICSEARCH_INTEGRATION=1 \
 docker compose --profile test run --rm test \
 pytest -q backend/tests/search/test_elasticsearch_integration.py
 ```
+
+Seed the approved synthetic fixture through the full M1-M3 pipeline, then open `http://localhost:8000`:
+
+```bash
+docker compose exec api python scripts/index_fixture.py --index jobs-v1-demo
+```
+
+The script parses the committed HTML fixture, cleans it, runs the pinned spaCy model and skill dictionary, bulk-indexes deterministic documents, and switches `jobs-current`. It does not fetch a live source.

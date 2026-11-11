@@ -1,7 +1,7 @@
 from datetime import datetime
 from hashlib import sha256
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AnyHttpUrl, BaseModel, Field, model_validator
 
 from jobsift.processing.enrichment_models import EnrichedJobPosting
 
@@ -15,7 +15,7 @@ class SearchDocument(BaseModel):
     company: str
     location: str | None = None
     description: str | None = None
-    url: str
+    url: AnyHttpUrl
     posted_at: datetime | None = None
     employment_type: str | None = None
     salary_min: float | None = None
@@ -110,6 +110,8 @@ class JobSearchResult(BaseModel):
     next_cursor: SearchCursor | None
     skill_facets: list[FacetBucket]
     location_facets: list[FacetBucket]
+    is_partial: bool = False
+    warnings: list[str] = Field(default_factory=list)
 
 
 class IndexBuildResult(BaseModel):

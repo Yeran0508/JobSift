@@ -124,6 +124,14 @@ class JobSearchService:
         total_value = hits_section.get("total", 0)
         total = total_value.get("value", 0) if isinstance(total_value, dict) else total_value
         aggregations = payload.get("aggregations", {})
+        shards = payload.get("_shards", {})
+        failed_shards = int(shards.get("failed", 0)) if isinstance(shards, dict) else 0
+        timed_out = bool(payload.get("timed_out", False))
+        warnings: list[str] = []
+        if timed_out:
+            warnings.append("Elasticsearch timed out; results may be incomplete.")
+        if failed_shards:
+            warnings.append(f"{failed_shards} search shard(s) failed; results may be incomplete.")
         next_cursor = (
             SearchCursor(values=hits[-1].sort)
             if len(hits) == requested_size and hits
@@ -136,6 +144,8 @@ class JobSearchService:
             next_cursor=next_cursor,
             skill_facets=JobSearchService._buckets(aggregations, "skills"),
             location_facets=JobSearchService._buckets(aggregations, "locations"),
+            is_partial=timed_out or failed_shards > 0,
+            warnings=warnings,
         )
 
     @staticmethod
