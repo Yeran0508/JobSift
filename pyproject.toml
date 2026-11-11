@@ -35,6 +35,7 @@ where = ["backend"]
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 addopts = "-ra --strict-markers"
+markers = ["integration: requires a real external service"]
 
 [tool.coverage.run]
 source = ["jobsift"]

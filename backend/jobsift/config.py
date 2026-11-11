@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     elasticsearch_url: AnyHttpUrl = AnyHttpUrl("http://elasticsearch:9200")
+    elasticsearch_alias: str = "jobs-current"
+    elasticsearch_timeout_seconds: float = 10.0
 
 
 @lru_cache

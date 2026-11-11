@@ -7,6 +7,8 @@ services:
       JOBSIFT_ENVIRONMENT: ${JOBSIFT_ENVIRONMENT:-development}
       JOBSIFT_LOG_LEVEL: ${JOBSIFT_LOG_LEVEL:-INFO}
       JOBSIFT_ELASTICSEARCH_URL: ${JOBSIFT_ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      JOBSIFT_ELASTICSEARCH_ALIAS: ${JOBSIFT_ELASTICSEARCH_ALIAS:-jobs-current}
+      JOBSIFT_ELASTICSEARCH_TIMEOUT_SECONDS: ${JOBSIFT_ELASTICSEARCH_TIMEOUT_SECONDS:-10}
     ports:
       - "${JOBSIFT_API_PORT:-8000}:8000"
     healthcheck:
@@ -30,7 +32,7 @@ services:
       xpack.security.enabled: "false"
       ES_JAVA_OPTS: -Xms512m -Xmx512m
     ports:
-      - "9200:9200"
+      - "${JOBSIFT_ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:

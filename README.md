@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0, M1, and M2 are implemented and verified. M1 provides compliance-gated fixture/API adapters, bounded HTTP behavior, immutable raw snapshots, parser-drift checks, idempotent reruns, and auditable source metrics. M2-A adds policy-driven Pandas cleaning, guarded missing-value decisions, two-layer deduplication, raw-value preservation, and per-field transformation reasons. M2-B adds a pinned spaCy English pipeline for organization/location entities and a versioned, collision-checked `PhraseMatcher` skill dictionary with aliases, match offsets, input hashes, and model/dictionary provenance.
+M0 through M3 are implemented and verified. M1 provides compliance-gated acquisition and auditable source metrics. M2 adds policy-driven Pandas cleaning, two-layer deduplication, a pinned spaCy entity pipeline, and a versioned `PhraseMatcher` skill dictionary. M3 adds a strict Elasticsearch mapping, separate index/search analyzers, deterministic bulk upserts, versioned-index alias swaps, weighted BM25 search, exact filters, facets, and deterministic `search_after` pagination.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-Selenium acquisition, cookies, browser waits, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
+The FastAPI search endpoint, evaluation results, and user interface are not implemented yet; those are M4 and M5 work. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
 
 ## Interview evidence standard
 
@@ -30,7 +30,7 @@ concept -> small implementation -> automated test -> real verification
 
 The repository never treats a target as a measured result. See [requirements.md](requirements.md) for V1 acceptance criteria and [docs/experiments/README.md](docs/experiments/README.md) for experiment evidence rules.
 
-M1 acquisition design is documented in [docs/acquisition.md](docs/acquisition.md). M2 cleaning policies, evidence, and limitations are documented in [docs/processing.md](docs/processing.md).
+M1 acquisition design is documented in [docs/acquisition.md](docs/acquisition.md), M2 processing in [docs/processing.md](docs/processing.md), and M3 indexing/search in [docs/search.md](docs/search.md).
 
 ## Reviewed public-source smoke test
 
@@ -72,10 +72,16 @@ docker compose --profile test run --rm test ruff check .
 docker compose config --quiet
 ```
 
-Elasticsearch is declared for M3 and can be started separately when its integration begins:
+Start the M3 Elasticsearch service separately:
 
 ```bash
 docker compose --profile search up -d elasticsearch
 ```
 
-Declaring or starting the container does not mean that application indexing and search are implemented.
+If host port `9200` is already occupied, set `JOBSIFT_ELASTICSEARCH_PORT=9201`; containers still use `http://elasticsearch:9200`. The integration test is opt-in because it requires this real service:
+
+```bash
+JOBSIFT_RUN_ELASTICSEARCH_INTEGRATION=1 \
+docker compose --profile test run --rm test \
+pytest -q backend/tests/search/test_elasticsearch_integration.py
+```
