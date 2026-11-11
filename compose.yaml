@@ -1,0 +1,60 @@
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    environment:
+      JOBSIFT_ENVIRONMENT: ${JOBSIFT_ENVIRONMENT:-development}
+      JOBSIFT_LOG_LEVEL: ${JOBSIFT_LOG_LEVEL:-INFO}
+      JOBSIFT_ELASTICSEARCH_URL: ${JOBSIFT_ELASTICSEARCH_URL:-http://elasticsearch:9200}
+    ports:
+      - "${JOBSIFT_API_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
+    profiles: ["search"]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  test:
+    build:
+      context: .
+      target: test
+    profiles: ["test"]
+    command:
+      - pytest
+      - --cov=jobsift
+      - --cov-report=term-missing
+      - --cov-fail-under=90
+      - -o
+      - cache_dir=/tmp/pytest_cache
+
+volumes:
+  elasticsearch-data:

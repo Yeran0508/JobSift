@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=75.8,<76"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobsift"
+version = "0.1.0"
+description = "Interview-oriented public job aggregation and search platform"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.115.12",
+    "pydantic-settings==2.9.1",
+    "uvicorn[standard]==0.34.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx==0.28.1",
+    "pytest==8.3.5",
+    "pytest-cov==6.1.1",
+    "ruff==0.11.8",
+]
+
+[tool.setuptools]
+package-dir = {"" = "backend"}
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+source = ["jobsift"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
