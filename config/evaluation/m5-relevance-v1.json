@@ -1,0 +1,31 @@
+{
+  "version": "m5-relevance-v1",
+  "dataset": "example-fixture-v1",
+  "judged_at": "2026-11-11T12:00:00Z",
+  "grade_scale": {
+    "0": "not relevant",
+    "1": "marginal",
+    "2": "relevant",
+    "3": "highly relevant"
+  },
+  "cases": [
+    {
+      "case_id": "backend-python",
+      "request": {"query": "backend engineer", "skills": ["Python"], "size": 2},
+      "relevance": {"eng-101": 3, "eng-102": 0},
+      "rationale": "The first fixture explicitly has a backend title and Python skill."
+    },
+    {
+      "case_id": "data-ingestion",
+      "request": {"query": "data ingestion", "size": 2},
+      "relevance": {"eng-101": 0, "85f2c93e5627d2bf5cd6": 3},
+      "rationale": "The second fixture explicitly describes data ingestion tools."
+    },
+    {
+      "case_id": "remote-role",
+      "request": {"query": "engineer", "locations": ["Remote, US"], "size": 2},
+      "relevance": {"eng-101": 0, "85f2c93e5627d2bf5cd6": 2},
+      "rationale": "The second fixture is the only role explicitly marked Remote, US."
+    }
+  ]
+}
