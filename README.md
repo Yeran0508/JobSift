@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0 is implemented and locally verified. The repository contains a Python 3.12/FastAPI liveness endpoint, typed configuration, Docker runtime/test targets, automated tests, a coverage gate, CI, and an Elasticsearch development service declaration. The current local evidence is four passing tests, 100% application coverage, a passing Ruff check, valid Compose configuration, and matching health responses from inside the container and through a host port.
+M0 is implemented and verified. M1-A now adds a compliance-gated source contract, synthetic fixture adapter, immutable content-addressed raw snapshots, configuration-driven HTML parsing, stable source IDs, missing-field metrics, parser-drift detection, idempotent reruns, and per-source failure isolation.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-Selenium acquisition, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet.
+Live HTTP/Selenium acquisition, retries, rate limiting, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet.
 
 ## Interview evidence standard
 
@@ -29,6 +29,8 @@ concept -> small implementation -> automated test -> real verification
 ```
 
 The repository never treats a target as a measured result. See [requirements.md](requirements.md) for V1 acceptance criteria and [docs/experiments/README.md](docs/experiments/README.md) for experiment evidence rules.
+
+M1 acquisition design and current limitations are documented in [docs/acquisition.md](docs/acquisition.md).
 
 ## Local development
 

@@ -1,0 +1,28 @@
+{
+  "source_id": "example-fixture",
+  "display_name": "Synthetic Example Jobs",
+  "base_url": "https://jobs.example.test/",
+  "enabled": true,
+  "method": "fixture",
+  "parser_owner": "JobSift maintainers",
+  "selectors": {
+    "card": "article.job-card",
+    "title": ".job-title",
+    "company": ".company",
+    "url": "a.job-link",
+    "source_id_attribute": "data-job-id",
+    "location": ".location",
+    "description": ".description",
+    "posted_at": "time",
+    "salary": ".salary"
+  },
+  "compliance": {
+    "robots_txt_reviewed": false,
+    "terms_reviewed": false,
+    "public_jobs_only": true,
+    "collects_personal_data": false,
+    "max_requests_per_minute": 10,
+    "attribution": "Synthetic fixture authored for JobSift tests"
+  },
+  "required_field_missing_threshold": 0.0
+}

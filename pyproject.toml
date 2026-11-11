@@ -9,6 +9,7 @@ description = "Interview-oriented public job aggregation and search platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "beautifulsoup4==4.13.4",
     "fastapi==0.115.12",
     "pydantic-settings==2.9.1",
     "uvicorn[standard]==0.34.2",
