@@ -66,3 +66,12 @@ def test_parser_tracks_optional_selector_absence(source_config: SourceConfig) ->
 
     assert report.jobs[0].location is None
     assert report.missing_rates["location"] == 1.0
+
+
+def test_html_parser_requires_selector_configuration(
+    source_config: SourceConfig,
+) -> None:
+    config = source_config.model_copy(update={"selectors": None})
+
+    with pytest.raises(ValueError, match="has no HTML selectors"):
+        HtmlJobParser().parse(b"<html></html>", config, ACQUIRED_AT)

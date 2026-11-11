@@ -31,8 +31,9 @@ class RawSnapshotStore:
         digest = sha256(content).hexdigest()
         source_directory = self._root / source_id
         source_directory.mkdir(parents=True, exist_ok=True)
-        content_path = source_directory / f"{digest}.html"
-        metadata_path = source_directory / f"{digest}.json"
+        extension = ".json" if "application/json" in content_type.lower() else ".html"
+        content_path = source_directory / f"{digest}{extension}"
+        metadata_path = source_directory / f"{digest}.metadata.json"
 
         created = self._write_once(content_path, content)
         metadata = {

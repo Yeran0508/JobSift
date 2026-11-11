@@ -6,7 +6,7 @@ JobSift treats source access, raw evidence, and parsing as separate boundaries:
 SourceConfig + compliance gate
         -> SourceAdapter.fetch()
         -> immutable content-addressed snapshot
-        -> configuration-driven HTML parser
+        -> source-specific parser selected by ParserKind
         -> raw job records + missing-field report
 ```
 
@@ -20,4 +20,8 @@ Before enabling a live source, its configuration must record a parser owner, att
 
 M1-A implements the source contract, compliance gate, fixture adapter, immutable raw snapshots, configuration-driven CSS parsing, stable source IDs, missing-field metrics, parser-drift failure, idempotent reruns, and per-source batch failure isolation.
 
-It does not yet make HTTP requests, start a browser, reuse cookies, retry with backoff, or rate-limit live traffic. Those capabilities remain M1-B and cannot be described as implemented.
+M1-B adds a shared `httpx.Client` boundary, a thread-safe conservative rate limiter, per-request timeout, bounded retry attempts, numeric `Retry-After` support, capped exponential backoff, identified `User-Agent`, Greenhouse JSON parsing, JSON snapshots, and a CLI for an explicit reviewed-source run. Tests use `httpx.MockTransport`; CI never contacts Greenhouse.
+
+The reviewed source is the official Greenhouse Job Board GET API. Greenhouse documents published Job Board GET data as public and unauthenticated. JobSift uses only the list-jobs endpoint and does not request application questions, authenticate, submit applications, or collect applicant data. See [compliance/greenhouse-job-board-api.md](compliance/greenhouse-job-board-api.md).
+
+Selenium is not implemented in M1-B because the selected source already provides structured public JSON. Adding a browser would increase latency, resource use, and selector fragility without adding data for this source.

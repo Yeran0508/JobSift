@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from jobsift.acquisition.models import AcquisitionMethod, SourceConfig
 
@@ -41,10 +43,58 @@ def test_live_source_must_pass_every_compliance_gate(
 
 def test_verified_public_live_source_is_allowed(source_config: SourceConfig) -> None:
     policy = source_config.compliance.model_copy(
+        update={
+            "robots_txt_reviewed": True,
+            "terms_reviewed": True,
+            "reviewed_on": date(2026, 11, 11),
+        }
+    )
+    live = source_config.model_copy(
+        update={
+            "method": AcquisitionMethod.HTTP,
+            "compliance": policy,
+            "endpoint_url": "https://jobs.example.test/api/jobs",
+            "http": {
+                "timeout_seconds": 10,
+                "max_attempts": 2,
+                "initial_backoff_seconds": 0.1,
+                "max_backoff_seconds": 1,
+                "user_agent": "JobSift tests",
+            },
+        }
+    )
+
+    live.assert_collection_allowed()
+
+
+def test_live_source_requires_review_date(source_config: SourceConfig) -> None:
+    policy = source_config.compliance.model_copy(
         update={"robots_txt_reviewed": True, "terms_reviewed": True}
     )
     live = source_config.model_copy(
         update={"method": AcquisitionMethod.HTTP, "compliance": policy}
     )
 
-    live.assert_collection_allowed()
+    with pytest.raises(ValueError, match="no compliance review date"):
+        live.assert_collection_allowed()
+
+
+def test_live_source_requires_endpoint_and_http_policy(source_config: SourceConfig) -> None:
+    policy = source_config.compliance.model_copy(
+        update={
+            "robots_txt_reviewed": True,
+            "terms_reviewed": True,
+            "reviewed_on": date(2026, 11, 11),
+        }
+    )
+    missing_endpoint = source_config.model_copy(
+        update={"method": AcquisitionMethod.HTTP, "compliance": policy}
+    )
+    with pytest.raises(ValueError, match="no endpoint URL"):
+        missing_endpoint.assert_collection_allowed()
+
+    missing_http = missing_endpoint.model_copy(
+        update={"endpoint_url": "https://jobs.example.test/api/jobs"}
+    )
+    with pytest.raises(ValueError, match="no HTTP policy"):
+        missing_http.assert_collection_allowed()

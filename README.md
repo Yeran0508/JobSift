@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0 is implemented and verified. M1-A now adds a compliance-gated source contract, synthetic fixture adapter, immutable content-addressed raw snapshots, configuration-driven HTML parsing, stable source IDs, missing-field metrics, parser-drift detection, idempotent reruns, and per-source failure isolation.
+M0 is implemented and verified. M1-A adds a compliance-gated source contract, synthetic fixture adapter, immutable content-addressed raw snapshots, configuration-driven HTML parsing, stable source IDs, missing-field metrics, parser-drift detection, idempotent reruns, and per-source failure isolation. M1-B adds an identified HTTP client, reusable sessions, timeouts, conservative rate limiting, bounded retries with `Retry-After` or exponential backoff, Greenhouse JSON parsing, and a reviewed public Greenhouse source.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-Live HTTP/Selenium acquisition, retries, rate limiting, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet.
+Selenium acquisition, cookies, browser waits, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API.
 
 ## Interview evidence standard
 
@@ -31,6 +31,24 @@ concept -> small implementation -> automated test -> real verification
 The repository never treats a target as a measured result. See [requirements.md](requirements.md) for V1 acceptance criteria and [docs/experiments/README.md](docs/experiments/README.md) for experiment evidence rules.
 
 M1 acquisition design and current limitations are documented in [docs/acquisition.md](docs/acquisition.md).
+
+## Reviewed public-source smoke test
+
+The Greenhouse Job Board API configuration is limited to published job-listing GET data, identifies JobSift through its user agent, and defaults to two requests per minute. It does not access application questions or submit applicant data. Review evidence is in [docs/compliance/greenhouse-job-board-api.md](docs/compliance/greenhouse-job-board-api.md).
+
+Run one explicit acquisition into ignored local storage:
+
+```bash
+docker build --target runtime -t jobsift-api .
+docker run --rm \
+  -v "$PWD/data/raw:/output" \
+  jobsift-api \
+  python scripts/acquire_source.py \
+  --config config/sources/greenhouse-anthropic.json \
+  --output /output
+```
+
+This is an explicit tool command, not an API startup side effect or a CI action. Current counts can change whenever the source publishes or closes jobs.
 
 ## Local development
 

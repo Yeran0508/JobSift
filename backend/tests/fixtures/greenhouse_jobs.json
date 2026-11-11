@@ -1,0 +1,20 @@
+{
+  "jobs": [
+    {
+      "id": 101,
+      "title": "Backend Engineer",
+      "updated_at": "2026-11-10T12:00:00Z",
+      "location": {"name": "Chicago, IL"},
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/101",
+      "content": "<p>Build <strong>Python</strong> services.</p>"
+    },
+    {
+      "id": 102,
+      "title": "Software Engineer I",
+      "updated_at": "2026-11-11T08:30:00Z",
+      "location": {"name": "Remote - US"},
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/102"
+    }
+  ],
+  "meta": {"total": 2}
+}

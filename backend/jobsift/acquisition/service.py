@@ -1,8 +1,9 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from jobsift.acquisition.adapters import SourceAdapter
-from jobsift.acquisition.models import ParseReport
-from jobsift.acquisition.parser import HtmlJobParser
+from jobsift.acquisition.models import ParseReport, ParserKind
+from jobsift.acquisition.parser import GreenhouseJobParser, HtmlJobParser, JobContentParser
 from jobsift.acquisition.storage import RawSnapshotStore, StoredSnapshot
 
 
@@ -19,9 +20,20 @@ class BatchAcquisitionResult:
 
 
 class AcquisitionService:
-    def __init__(self, snapshot_store: RawSnapshotStore, parser: HtmlJobParser) -> None:
+    def __init__(
+        self,
+        snapshot_store: RawSnapshotStore,
+        parsers: Mapping[ParserKind, JobContentParser] | None = None,
+    ) -> None:
         self._snapshot_store = snapshot_store
-        self._parser = parser
+        self._parsers = (
+            parsers
+            if parsers is not None
+            else {
+                ParserKind.HTML: HtmlJobParser(),
+                ParserKind.GREENHOUSE: GreenhouseJobParser(),
+            }
+        )
 
     def collect(self, adapter: SourceAdapter) -> AcquisitionRun:
         adapter.config.assert_collection_allowed()
@@ -33,7 +45,10 @@ class AcquisitionService:
             content_type=page.content_type,
             fetched_at=page.fetched_at,
         )
-        report = self._parser.parse(page.content, adapter.config, page.fetched_at)
+        parser = self._parsers.get(adapter.config.parser_kind)
+        if parser is None:
+            raise ValueError(f"no parser registered for {adapter.config.parser_kind}")
+        report = parser.parse(page.content, adapter.config, page.fetched_at)
         return AcquisitionRun(snapshot=snapshot, report=report)
 
     def collect_many(self, adapters: list[SourceAdapter]) -> BatchAcquisitionResult:

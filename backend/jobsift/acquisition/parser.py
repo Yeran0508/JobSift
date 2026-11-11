@@ -1,5 +1,7 @@
+import json
 from datetime import datetime
 from hashlib import sha256
+from typing import Protocol
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
@@ -9,6 +11,15 @@ from jobsift.acquisition.models import ParseReport, RawJobPosting, SourceConfig
 
 class ParserDriftError(ValueError):
     """Raised when configured selectors no longer produce trustworthy records."""
+
+
+class JobContentParser(Protocol):
+    def parse(
+        self,
+        content: bytes,
+        config: SourceConfig,
+        acquired_at: datetime,
+    ) -> ParseReport: ...
 
 
 class HtmlJobParser:
@@ -29,6 +40,8 @@ class HtmlJobParser:
         config: SourceConfig,
         acquired_at: datetime,
     ) -> ParseReport:
+        if config.selectors is None:
+            raise ValueError(f"source {config.source_id} has no HTML selectors")
         soup = BeautifulSoup(html, "html.parser")
         cards = soup.select(config.selectors.card)
         if not cards:
@@ -104,4 +117,89 @@ class HtmlJobParser:
         if element is None:
             return None
         value = element.get(attribute)
+        return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+class GreenhouseJobParser:
+    _tracked_fields = (
+        "title",
+        "company",
+        "location",
+        "description",
+        "url",
+        "posted_at_raw",
+        "salary_raw",
+    )
+    _required_fields = ("title", "company", "url")
+
+    def parse(
+        self,
+        content: bytes,
+        config: SourceConfig,
+        acquired_at: datetime,
+    ) -> ParseReport:
+        try:
+            payload = json.loads(content)
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ParserDriftError(
+                f"source {config.source_id} returned invalid JSON"
+            ) from error
+        if not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list):
+            raise ParserDriftError(f"source {config.source_id} returned no jobs array")
+
+        raw_jobs = payload["jobs"]
+        jobs = [self._parse_job(raw_job, config, acquired_at) for raw_job in raw_jobs]
+        missing_rates = {
+            field: (sum(getattr(job, field) is None for job in jobs) / len(jobs) if jobs else 0.0)
+            for field in self._tracked_fields
+        }
+        failed_required = [
+            field
+            for field in self._required_fields
+            if missing_rates[field] > config.required_field_missing_threshold
+        ]
+        if failed_required:
+            fields = ", ".join(failed_required)
+            raise ParserDriftError(
+                f"source {config.source_id} exceeded its required-field threshold: {fields}"
+            )
+        return ParseReport(
+            source=config.source_id,
+            cards_seen=len(jobs),
+            jobs=jobs,
+            missing_rates=missing_rates,
+        )
+
+    @staticmethod
+    def _parse_job(
+        raw_job: object,
+        config: SourceConfig,
+        acquired_at: datetime,
+    ) -> RawJobPosting:
+        if not isinstance(raw_job, dict):
+            raise ParserDriftError(f"source {config.source_id} returned a non-object job")
+        location = raw_job.get("location")
+        location_name = location.get("name") if isinstance(location, dict) else None
+        content = raw_job.get("content")
+        description = None
+        if isinstance(content, str) and content.strip():
+            description = BeautifulSoup(content, "html.parser").get_text(" ", strip=True) or None
+        job_id = raw_job.get("id")
+        if job_id is None:
+            raise ParserDriftError(f"source {config.source_id} returned a job without an ID")
+        return RawJobPosting(
+            source=config.source_id,
+            source_job_id=str(job_id),
+            title=GreenhouseJobParser._string(raw_job.get("title")),
+            company=config.display_name,
+            location=GreenhouseJobParser._string(location_name),
+            description=description,
+            url=GreenhouseJobParser._string(raw_job.get("absolute_url")),
+            posted_at_raw=GreenhouseJobParser._string(raw_job.get("updated_at")),
+            salary_raw=None,
+            acquired_at=acquired_at,
+        )
+
+    @staticmethod
+    def _string(value: object) -> str | None:
         return value.strip() if isinstance(value, str) and value.strip() else None

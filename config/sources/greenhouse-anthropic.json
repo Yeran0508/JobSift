@@ -1,0 +1,31 @@
+{
+  "source_id": "greenhouse-anthropic",
+  "display_name": "Anthropic",
+  "base_url": "https://boards-api.greenhouse.io/",
+  "enabled": true,
+  "method": "api",
+  "parser_kind": "greenhouse",
+  "parser_owner": "JobSift maintainers",
+  "endpoint_url": "https://boards-api.greenhouse.io/v1/boards/anthropic/jobs",
+  "selectors": null,
+  "http": {
+    "timeout_seconds": 20.0,
+    "max_attempts": 3,
+    "initial_backoff_seconds": 1.0,
+    "max_backoff_seconds": 8.0,
+    "user_agent": "JobSift/0.1 (+https://github.com/Yeran0508/JobSift)"
+  },
+  "compliance": {
+    "robots_txt_reviewed": true,
+    "terms_reviewed": true,
+    "public_jobs_only": true,
+    "collects_personal_data": false,
+    "max_requests_per_minute": 2,
+    "attribution": "Published jobs from Anthropic via the official Greenhouse Job Board API",
+    "reviewed_on": "2026-11-11",
+    "documentation_url": "https://docs.greenhouse.io/job-board",
+    "robots_url": "https://boards-api.greenhouse.io/robots.txt",
+    "terms_url": "https://docs.greenhouse.io/job-board#authentication"
+  },
+  "required_field_missing_threshold": 0.0
+}

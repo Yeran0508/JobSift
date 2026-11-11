@@ -4,6 +4,7 @@
   "base_url": "https://jobs.example.test/",
   "enabled": true,
   "method": "fixture",
+  "parser_kind": "html",
   "parser_owner": "JobSift maintainers",
   "selectors": {
     "card": "article.job-card",

@@ -16,3 +16,14 @@ def fixture_path() -> Path:
 def source_config() -> SourceConfig:
     config_path = REPOSITORY_ROOT / "config/sources/example-fixture.json"
     return SourceConfig.model_validate(json.loads(config_path.read_text()))
+
+
+@pytest.fixture
+def greenhouse_fixture_path() -> Path:
+    return REPOSITORY_ROOT / "backend/tests/fixtures/greenhouse_jobs.json"
+
+
+@pytest.fixture
+def greenhouse_config() -> SourceConfig:
+    config_path = REPOSITORY_ROOT / "config/sources/greenhouse-anthropic.json"
+    return SourceConfig.model_validate(json.loads(config_path.read_text()))

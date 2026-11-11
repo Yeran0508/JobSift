@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from jobsift.acquisition.adapters import FixtureSourceAdapter
-from jobsift.acquisition.models import AcquisitionMethod, SourceConfig
+from jobsift.acquisition.models import AcquisitionMethod, ParserKind, SourceConfig
 from jobsift.acquisition.parser import HtmlJobParser
 from jobsift.acquisition.service import AcquisitionService
 from jobsift.acquisition.storage import RawSnapshotStore
@@ -23,7 +23,9 @@ def test_acquisition_service_forms_an_idempotent_fixture_pipeline(
     source_config: SourceConfig,
     fixture_path: Path,
 ) -> None:
-    service = AcquisitionService(RawSnapshotStore(tmp_path), HtmlJobParser())
+    service = AcquisitionService(
+        RawSnapshotStore(tmp_path), {ParserKind.HTML: HtmlJobParser()}
+    )
     adapter = FixtureSourceAdapter(source_config, fixture_path)
 
     first = service.collect(adapter)
@@ -40,7 +42,9 @@ def test_batch_acquisition_isolates_source_failures(
     source_config: SourceConfig,
     fixture_path: Path,
 ) -> None:
-    service = AcquisitionService(RawSnapshotStore(tmp_path), HtmlJobParser())
+    service = AcquisitionService(
+        RawSnapshotStore(tmp_path), {ParserKind.HTML: HtmlJobParser()}
+    )
     working = FixtureSourceAdapter(source_config, fixture_path)
     broken_config = source_config.model_copy(update={"source_id": "broken-fixture"})
     broken = FixtureSourceAdapter(broken_config, tmp_path / "missing.html")
@@ -50,3 +54,15 @@ def test_batch_acquisition_isolates_source_failures(
     assert list(result.successes) == ["example-fixture"]
     assert "broken-fixture" in result.failures
     assert result.failures["broken-fixture"].startswith("FileNotFoundError:")
+
+
+def test_acquisition_service_rejects_unregistered_parser(
+    tmp_path,
+    source_config: SourceConfig,
+    fixture_path: Path,
+) -> None:
+    service = AcquisitionService(RawSnapshotStore(tmp_path), {})
+    adapter = FixtureSourceAdapter(source_config, fixture_path)
+
+    with pytest.raises(ValueError, match="no parser registered"):
+        service.collect(adapter)

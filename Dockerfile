@@ -9,6 +9,7 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY backend ./backend
 COPY config ./config
+COPY scripts ./scripts
 RUN pip install --no-cache-dir .
 
 RUN addgroup --system app && adduser --system --ingroup app --home /nonexistent app
