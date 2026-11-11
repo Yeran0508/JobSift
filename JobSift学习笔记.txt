@@ -89,6 +89,11 @@ Compose 首次启动时发现宿主 8000 已被占用。保留未知进程不动
 最终再次运行 Compose 配置解析、Python compileall 和尾随空白扫描，并检查待提交文件清单。首次提交包含 M0 代码、测试、
 文档、CI 和学习笔记；推送后再用远程 main 的 commit SHA 判断 GitHub 是否收到完全相同的版本。
 
+第十一步：推送并核对远程证据。
+创建首次提交 `2dbfe83 feat: establish JobSift M0 baseline` 并推送到 origin/main。本地 HEAD 与远程 main 都解析为完整 SHA
+`2dbfe834f535f8f32c22bf0b4bcedbce321e8060`，证明远程收到的版本与本地一致。该提交触发 GitHub Actions CI run
+43061679514；远程依次完成安装、Ruff、pytest/coverage 和 Compose 配置检查，26 秒后状态为 completed/success。
+
 当前文件
 --------
 pyproject.toml：Python 版本、运行/开发依赖、pytest、coverage 与 Ruff 配置。
@@ -128,8 +133,8 @@ JOBSIFT_API_PORT 配置，默认仍是 8000。
 本次运行总结
 ------------
 M0 已在本地完成并通过真实验证：固定 Python 3.12 镜像可构建，配置边界、liveness、OpenAPI、Ruff、pytest、覆盖率和
-Compose 配置均可重复验证。首次提交推送后，远程 CI 是否通过仍以该 commit 对应的 GitHub Actions 结果为准，不能用
-本地测试替代远程证据。
+Compose 配置均可重复验证。M0 实现提交 2dbfe83 已推送到 main，对应 GitHub Actions run 43061679514 状态为 success；
+这里记录的是该精确 commit 的远程证据，而不是用本地测试替代 CI。
 Selenium、Pandas、spaCy 和 Elasticsearch 业务接入均未开始，也没有被写成已实现。
 
 简约面试回答
