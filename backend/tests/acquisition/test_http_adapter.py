@@ -41,11 +41,10 @@ def test_rate_limiter_spaces_requests() -> None:
     clock = FakeClock()
     limiter = RateLimiter(2, clock=clock, sleeper=clock.sleep)
 
-    limiter.acquire()
-    limiter.acquire()
-    limiter.acquire()
+    waits = [limiter.acquire(), limiter.acquire(), limiter.acquire()]
 
     assert clock.sleeps == [30.0, 30.0]
+    assert waits == [0.0, 30.0, 30.0]
 
 
 def test_http_adapter_sends_identified_public_get(greenhouse_config: SourceConfig) -> None:
@@ -55,13 +54,17 @@ def test_http_adapter_sends_identified_public_get(greenhouse_config: SourceConfi
         requests.append(request)
         return httpx.Response(200, json={"jobs": []}, headers={"content-type": "application/json"})
 
-    page = _adapter(greenhouse_config, handler, []).fetch()
+    adapter = _adapter(greenhouse_config, handler, [])
+    page = adapter.fetch()
 
     assert len(requests) == 1
     assert requests[0].headers["user-agent"].startswith("JobSift/0.1")
     assert requests[0].headers["accept"] == "application/json"
     assert page.content_type == "application/json"
     assert page.content == b'{"jobs":[]}'
+    assert page.fetch_stats.attempts == 1
+    assert page.fetch_stats.retries == 0
+    assert adapter.last_stats == page.fetch_stats
 
 
 def test_http_adapter_honors_retry_after_then_succeeds(
@@ -78,9 +81,12 @@ def test_http_adapter_honors_retry_after_then_succeeds(
     def handler(_request: httpx.Request) -> httpx.Response:
         return next(responses)
 
-    _adapter(greenhouse_config, handler, sleeps).fetch()
+    page = _adapter(greenhouse_config, handler, sleeps).fetch()
 
     assert sleeps == [2.0]
+    assert page.fetch_stats.attempts == 2
+    assert page.fetch_stats.retries == 1
+    assert page.fetch_stats.backoff_seconds == 2.0
 
 
 def test_http_adapter_retries_transport_error_with_exponential_backoff(

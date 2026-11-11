@@ -1,5 +1,6 @@
 import httpx
 from jobsift.acquisition.adapters import HttpSourceAdapter, RateLimiter
+from jobsift.acquisition.audit import RunManifestStore, RunStatus
 from jobsift.acquisition.models import SourceConfig
 from jobsift.acquisition.service import AcquisitionService
 from jobsift.acquisition.storage import RawSnapshotStore
@@ -21,7 +22,12 @@ def test_greenhouse_api_forms_an_idempotent_json_pipeline(
         client=client,
         rate_limiter=RateLimiter(120, sleeper=lambda _seconds: None),
     )
-    service = AcquisitionService(RawSnapshotStore(tmp_path))
+    manifest_store = RunManifestStore(tmp_path / "manifests")
+    service = AcquisitionService(
+        RawSnapshotStore(tmp_path / "raw"),
+        manifest_store=manifest_store,
+        run_id_factory=iter(["run-1", "run-2"]).__next__,
+    )
 
     first = service.collect(adapter)
     second = service.collect(adapter)
@@ -31,3 +37,7 @@ def test_greenhouse_api_forms_an_idempotent_json_pipeline(
     assert first.snapshot.content_path.suffix == ".json"
     assert first.snapshot.metadata_path.name.endswith(".metadata.json")
     assert len(first.report.jobs) == 2
+    assert first.manifest.status is RunStatus.SUCCEEDED
+    assert first.manifest.jobs_parsed == 2
+    assert first.stored_manifest is not None
+    assert len(manifest_store.load_all()) == 2

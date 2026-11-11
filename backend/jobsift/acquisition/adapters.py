@@ -8,7 +8,7 @@ from typing import Protocol
 import httpx
 from pydantic import BaseModel, HttpUrl
 
-from jobsift.acquisition.models import AcquisitionMethod, SourceConfig
+from jobsift.acquisition.models import AcquisitionMethod, FetchStats, SourceConfig
 
 
 class FetchedPage(BaseModel):
@@ -16,11 +16,15 @@ class FetchedPage(BaseModel):
     content: bytes
     content_type: str
     fetched_at: datetime
+    fetch_stats: FetchStats
 
 
 class SourceAdapter(Protocol):
     @property
     def config(self) -> SourceConfig: ...
+
+    @property
+    def last_stats(self) -> FetchStats: ...
 
     def fetch(self) -> FetchedPage: ...
 
@@ -43,7 +47,7 @@ class RateLimiter:
         self._next_allowed_at = 0.0
         self._lock = threading.Lock()
 
-    def acquire(self) -> None:
+    def acquire(self) -> float:
         with self._lock:
             now = self._clock()
             wait_seconds = max(0.0, self._next_allowed_at - now)
@@ -51,6 +55,7 @@ class RateLimiter:
                 self._sleeper(wait_seconds)
                 now = self._clock()
             self._next_allowed_at = max(now, self._next_allowed_at) + self._interval_seconds
+            return wait_seconds
 
 
 class FixtureSourceAdapter:
@@ -59,17 +64,24 @@ class FixtureSourceAdapter:
             raise ValueError("FixtureSourceAdapter requires method=fixture")
         self._config = config
         self._fixture_path = fixture_path
+        self._last_stats = FetchStats()
 
     @property
     def config(self) -> SourceConfig:
         return self._config
 
+    @property
+    def last_stats(self) -> FetchStats:
+        return self._last_stats
+
     def fetch(self) -> FetchedPage:
+        self._last_stats = FetchStats(attempts=1)
         return FetchedPage(
             source_url=self._config.base_url,
             content=self._fixture_path.read_bytes(),
             content_type="text/html; charset=utf-8",
             fetched_at=datetime.now(UTC),
+            fetch_stats=self._last_stats,
         )
 
 
@@ -92,10 +104,15 @@ class HttpSourceAdapter:
         self._client = client
         self._rate_limiter = rate_limiter
         self._sleeper = sleeper
+        self._last_stats = FetchStats()
 
     @property
     def config(self) -> SourceConfig:
         return self._config
+
+    @property
+    def last_stats(self) -> FetchStats:
+        return self._last_stats
 
     def fetch(self) -> FetchedPage:
         self._config.assert_collection_allowed()
@@ -104,9 +121,12 @@ class HttpSourceAdapter:
         assert policy is not None
         assert endpoint_url is not None
         last_error: Exception | None = None
+        rate_limit_wait_seconds = 0.0
+        backoff_seconds = 0.0
 
         for attempt in range(1, policy.max_attempts + 1):
-            self._rate_limiter.acquire()
+            rate_limit_wait_seconds += self._rate_limiter.acquire()
+            self._record_stats(attempt, rate_limit_wait_seconds, backoff_seconds)
             try:
                 response = self._client.get(
                     str(endpoint_url),
@@ -117,7 +137,10 @@ class HttpSourceAdapter:
                 last_error = error
                 if attempt == policy.max_attempts:
                     break
-                self._sleeper(self._backoff_seconds(attempt))
+                delay = self._backoff_seconds(attempt)
+                backoff_seconds += delay
+                self._record_stats(attempt, rate_limit_wait_seconds, backoff_seconds)
+                self._sleeper(delay)
                 continue
 
             if response.status_code < 400:
@@ -126,8 +149,10 @@ class HttpSourceAdapter:
                     content=response.content,
                     content_type=response.headers.get("content-type", "application/octet-stream"),
                     fetched_at=datetime.now(UTC),
+                    fetch_stats=self._last_stats,
                 )
             if response.status_code not in self._retryable_statuses:
+                self._record_stats(attempt, rate_limit_wait_seconds, backoff_seconds)
                 response.raise_for_status()
             last_error = httpx.HTTPStatusError(
                 f"retryable HTTP status {response.status_code}",
@@ -136,8 +161,12 @@ class HttpSourceAdapter:
             )
             if attempt == policy.max_attempts:
                 break
-            self._sleeper(self._retry_delay(response, attempt))
+            delay = self._retry_delay(response, attempt)
+            backoff_seconds += delay
+            self._record_stats(attempt, rate_limit_wait_seconds, backoff_seconds)
+            self._sleeper(delay)
 
+        self._record_stats(policy.max_attempts, rate_limit_wait_seconds, backoff_seconds)
         raise RetryExhaustedError(
             f"source {self._config.source_id} failed after {policy.max_attempts} attempts"
         ) from last_error
@@ -156,3 +185,16 @@ class HttpSourceAdapter:
         assert policy is not None
         exponential = policy.initial_backoff_seconds * (2 ** (attempt - 1))
         return min(exponential, policy.max_backoff_seconds)
+
+    def _record_stats(
+        self,
+        attempts: int,
+        rate_limit_wait_seconds: float,
+        backoff_seconds: float,
+    ) -> None:
+        self._last_stats = FetchStats(
+            attempts=attempts,
+            retries=max(0, attempts - 1),
+            rate_limit_wait_seconds=rate_limit_wait_seconds,
+            backoff_seconds=backoff_seconds,
+        )

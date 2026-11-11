@@ -24,6 +24,13 @@ class HttpPolicy(BaseModel):
     user_agent: str = Field(min_length=1, max_length=200)
 
 
+class FetchStats(BaseModel):
+    attempts: int = Field(default=0, ge=0)
+    retries: int = Field(default=0, ge=0)
+    rate_limit_wait_seconds: float = Field(default=0.0, ge=0.0)
+    backoff_seconds: float = Field(default=0.0, ge=0.0)
+
+
 class CompliancePolicy(BaseModel):
     robots_txt_reviewed: bool = False
     terms_reviewed: bool = False

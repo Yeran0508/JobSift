@@ -13,11 +13,11 @@ allowed public source or fixture
 
 ## Current status
 
-M0 is implemented and verified. M1-A adds a compliance-gated source contract, synthetic fixture adapter, immutable content-addressed raw snapshots, configuration-driven HTML parsing, stable source IDs, missing-field metrics, parser-drift detection, idempotent reruns, and per-source failure isolation. M1-B adds an identified HTTP client, reusable sessions, timeouts, conservative rate limiting, bounded retries with `Retry-After` or exponential backoff, Greenhouse JSON parsing, and a reviewed public Greenhouse source.
+M0 and M1 are implemented and verified. M1-A adds a compliance-gated source contract, synthetic fixture adapter, immutable content-addressed raw snapshots, configuration-driven HTML parsing, stable source IDs, missing-field metrics, parser-drift detection, idempotent reruns, and per-source failure isolation. M1-B adds an identified HTTP client, reusable sessions, timeouts, conservative rate limiting, bounded retries with `Retry-After` or exponential backoff, Greenhouse JSON parsing, and a reviewed public Greenhouse source. M1-C adds immutable per-run audit manifests and source-level acquisition metrics for outcomes, jobs, snapshots, attempts, retries, waiting, backoff, missingness, and parser drift.
 
 Remote CI status must be checked against the exact pushed commit. Local success is not presented as GitHub Actions evidence.
 
-Selenium acquisition, cookies, browser waits, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API.
+Selenium acquisition, cookies, browser waits, Pandas cleaning, NLP enrichment, Elasticsearch indexing, job search, evaluation results, and the user interface are not implemented yet. Selenium remains intentionally deferred because the selected source exposes an official public JSON API; explicit browser waits become applicable only if a reviewed JavaScript-only source is added.
 
 ## Interview evidence standard
 
@@ -41,14 +41,15 @@ Run one explicit acquisition into ignored local storage:
 ```bash
 docker build --target runtime -t jobsift-api .
 docker run --rm \
-  -v "$PWD/data/raw:/output" \
+  -v "$PWD/data:/data" \
   jobsift-api \
   python scripts/acquire_source.py \
   --config config/sources/greenhouse-anthropic.json \
-  --output /output
+  --output /data/raw \
+  --manifest-output /data/manifests
 ```
 
-This is an explicit tool command, not an API startup side effect or a CI action. Current counts can change whenever the source publishes or closes jobs.
+This is an explicit tool command, not an API startup side effect or a CI action. It prints the run ID, manifest path, fetch statistics, and cumulative source metrics. Raw snapshots and manifests are ignored local evidence; current counts can change whenever the source publishes or closes jobs.
 
 ## Local development
 

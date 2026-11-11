@@ -12,4 +12,5 @@ dist
 *.egg-info
 data/raw
 data/processed
+data/manifests
 JobSift学习笔记.txt
